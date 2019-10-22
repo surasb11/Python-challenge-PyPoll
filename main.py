@@ -1,74 +1,95 @@
-import os
 import csv
+import os
 
-election_data_path = os.path.join('election_data.csv')
+inputFileName = "budget_data.csv"
+outputFileName = os.path.splitext(inputFileName)[0] + "_analyze.csv"
 
-with open(election_data_path, newline='') as election_data:
-	
-	csvreader = csv.reader(election_data, delimiter=',')
+with open(inputFileName, newline='') as inFile, open(outputFileName, 'w', newline='') as outfile:
+  r = csv.reader(inFile)
+  w = csv.writer(outfile)
 
-	print(csvreader)
+  next(r, None)
+    
+  w.writerow(['Date', 'Profit_Losses'])
 
-	election_data_header = next(csvreader)
-	print(f"CSV Header: {election_data_header}")
-	
-	inputFileName = "election_data.csv"
-	outputFileName = "election_data_script.txt"
+  for row in r:
+    w.writerow(row)
+    
+budget_csv_path = os.path.join("budget_data_analyze.csv")
 
-	total_votes = 0
-	winner = 0
-	winner_candidate = ""
-	candidates = 0
-	votes_percentage = 0
-	winner_candidate_summary = 0
-
-	greatest_votes = ["", 0]
-	candidates_list = []
-	candidate_votes = {}
+with open(budget_csv_path, newline="") as csvfile:
+  csv_reader = csv.reader(csvfile, delimiter=",")
+  
+  csv_header = next(csv_reader)
+  print(f"CSV Header: {csv_header}")
 
 
-	with open(election_data_path) as election_data:
-		reader = csv.reader(election_data)
-		header = next (reader)
-		
-		for row in reader:
-			total_votes = total_votes + 1
-			candidates_name = row[2]
-			
-			if candidates_name not in candidates_list:
-				
-				candidates_list.append(candidates_name)
+inputFileName = "budget_data_analyze.csv"
+outputFileName = "budget_data_analyze.txt"
 
-				candidate_votes[candidates_name] = 0
-				
-			
-			candidate_votes[candidates_name] = candidate_votes[candidates_name] + 1
-	 
-	print(candidate_votes)
+total_months = 0
+total_profit = 0
 
-	with open (outputFileName, "w") as txt_file:
-		election_results = (
-		f"Election Results\n"
-		f"-------------------------\n"
-		f"Total Votes {total_votes}\n"
-		f"-------------------------\n")
-		print(election_results, end="")
-		txt_file.write(election_results)
 
-		for candidate in candidate_votes:
-			votes = candidate_votes.get(candidate)
-			
-			vote_precentage = float(votes)/float(total_votes)*100
-			if (votes > winner):
-				winner = votes
-				winner_candidate = candidate
-			voter_output = f"{candidate}: {vote_precentage:.3f}% ({votes})\n"
-			print(voter_output, end="")
-			txt_file.write(voter_output)
-			
-		winning_candidate_summary = (
-		f"-------------------------\n"
-		f"Winner: {winner_candidate}\n"
-		f"-------------------------\n")
-		print(winning_candidate_summary)
-		txt_file.write(winning_candidate_summary)
+prev_profit = 0
+profit_change = 0
+
+greatest_increase_profits = ["", 0]
+greatest_decrease_profits = ["", 9999999999999999999999]
+
+profit_changes = []
+
+
+with open(inputFileName) as profit_data:
+  reader = csv.DictReader(profit_data)
+  
+  
+  for row in reader:
+    
+    total_months = total_months + 1
+    total_profit = total_profit + int(row["Profit_Losses"])
+
+    
+    profit_change = int(row["Profit_Losses"]) - prev_profit
+    
+    prev_profit = int(row["Profit_Losses"])
+    
+    if (profit_change > greatest_increase_profits[1]):
+      greatest_increase_profits[1] = profit_change
+      greatest_increase_profits[0] = row["Date"]
+
+    if (profit_change < greatest_decrease_profits[1]):
+      greatest_decrease_profits[1] = profit_change
+      greatest_decrease_profits[0] = row["Date"]
+      
+    profit_changes.append(int(row["Profit_Losses"]))    
+
+    
+  profit_avg = sum(profit_changes) / len(profit_changes)
+  
+
+  print()
+  print()
+  print()
+  
+  print("Financial Analysis")
+  
+  print("-------------------------")
+  
+  print("Total Months: " + str(total_months))
+  print("Total: " + "$" + str(total_profit))
+  print("Average Change: " + "$" + str(round(sum(profit_changes) / len(profit_changes),2)))
+  print("Greatest Increase in Profits: " + str(greatest_increase_profits[0]) + " ($" +  str(greatest_increase_profits[1]) + ")") 
+  print("Greatest Decrease in Profits: " + str(greatest_decrease_profits[0]) + " ($" +  str(greatest_decrease_profits[1]) + ")")
+
+
+with open(outputFileName, "w") as txt_file:
+  txt_file.write("Total Months: " + str(total_months))
+  txt_file.write("\n")
+  txt_file.write("Total: " + "$" + str(total_profit))
+  txt_file.write("\n")
+  txt_file.write("Average Change: " + "$" + str(round(sum(profit_changes) / len(profit_changes),2)))
+  txt_file.write("\n")
+  txt_file.write("Greatest Increase in Profits: " + str(greatest_increase_profits[0]) + " ($" + str(greatest_increase_profits[1]) + ")") 
+  txt_file.write("\n")
+  txt_file.write("Greatest Decrease in Profits: " + str(greatest_decrease_profits[0]) + " ($" + str(greatest_decrease_profits[1]) + ")")
